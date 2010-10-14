@@ -21,7 +21,8 @@ class BotStatusWidget extends Panel {
 	final UserService userService;
 	final File outputDir;
 
-	private final Table table = new Table("Submitted bots");
+	private final Table botStats = new Table("Submitted bots");
+	private final Table teamStats = new Table("Bots per team");
 	private final Button reload = new Button("Reload");
 	private final Label lastRefreshed = new Label("Last refreshed");
 
@@ -40,39 +41,69 @@ class BotStatusWidget extends Panel {
 				onReload();
 			}
 		});
-	    table.addContainerProperty("file", File.class, null);
-		table.addContainerProperty("lastUpdated", Date.class, null);
-	    table.addContainerProperty("teamName", String.class, null);
-	    table.addContainerProperty("age", Long.class, null);
-		table.setColumnHeaders(new String[] { "teamName", "file", "lastUpdated", "ageInMinutes" });
+	    botStats.addContainerProperty("teamName", String.class, null);
+	    botStats.addContainerProperty("file", File.class, null);
+	    botStats.addContainerProperty("age", Long.class, null);
+		botStats.addContainerProperty("lastUpdated", Date.class, null);
+		botStats.setColumnHeaders(new String[] { "Team", "Bot", "Age (in minutes)", "Last updated" });
+		teamStats.addContainerProperty("teamName", String.class, null);
+		teamStats.addContainerProperty("numberOfBots", Integer.class, null);
+		teamStats.setColumnHeaders(new String[] { "Team", "Number of bots" });
 	}
 	
 	private ComponentContainer initWidget() {
 		VerticalLayout layout = new VerticalLayout();
-		layout.addComponent(table);
+		layout.addComponent(botStats);
+		layout.addComponent(teamStats);
 		layout.addComponent(reload);
 		layout.addComponent(lastRefreshed);
 		return layout;
 	}
 
 	private void onReload() {
-		table.removeAllItems();
+		reloadBots();
+		reloadTeams();
+		lastRefreshed.setValue("Refreshed " + new Date(System.currentTimeMillis()));
+	}
+
+	private void reloadTeams() {
+		teamStats.removeAllItems();
 		for (String team : userService.getUsers()) {
 			File teamFolder = new File(outputDir, team);
+			Item item = teamStats.addItem(team);
+			item.getItemProperty("teamName").setValue(team);
+			item.getItemProperty("numberOfBots").setValue(getBotCount(teamFolder));
+		}
+	}
+
+	int getBotCount(File teamFolder) {
+		if (!teamFolder.canRead()) {
+			return 0;
+		} else {
+			return teamFolder.list(new CompiledBotsFilter()).length;
+		}
+	}
+
+	void reloadBots() {
+		botStats.removeAllItems();
+		for (String team : userService.getUsers()) {
+			File teamFolder = new File(outputDir, team);
+			if (!teamFolder.canRead()) {
+				continue;
+			}
 			String[] bots = teamFolder.list(new CompiledBotsFilter());
 			for (String bot : bots) {
 				File botFile = new File(teamFolder, bot);
-				Item botItem = table.addItem(botFile);
-				botItem.getItemProperty("file").setValue(new File(bot));
+				Item item = botStats.addItem(botFile);
+				item.getItemProperty("file").setValue(new File(bot));
 				Date lastModified = new Date(botFile.lastModified());
-				botItem.getItemProperty("lastUpdated").setValue(lastModified);
+				item.getItemProperty("lastUpdated").setValue(lastModified);
 				long ageInMillis = System.currentTimeMillis()
 						- lastModified.getTime();
-				botItem.getItemProperty("age").setValue(ageInMillis / (1000 * 60));
-				botItem.getItemProperty("teamName").setValue(team);
+				item.getItemProperty("age").setValue(ageInMillis / (1000 * 60));
+				item.getItemProperty("teamName").setValue(team);
 			}
 		}
-		lastRefreshed.setValue("Refreshed " + new Date(System.currentTimeMillis()));
 	}
 
 	static class CompiledBotsFilter implements FilenameFilter {
