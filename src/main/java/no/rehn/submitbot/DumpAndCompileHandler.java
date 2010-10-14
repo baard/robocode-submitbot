@@ -2,6 +2,7 @@ package no.rehn.submitbot;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -83,6 +84,11 @@ class DumpAndCompileHandler implements UploadBotHandler {
 		if (!fileName.endsWith(".java")) {
 			throw new IllegalArgumentException("must end with .java");
 		}
+		String expectedPackage = "package " + packageName + ";";
+		String actualPackage = parsePackageDeclaration();
+		if (!expectedPackage.equals(actualPackage)) {
+			throw new IllegalArgumentException(actualPackage + " != " + expectedPackage);
+		}
 		Runtime runtime = Runtime.getRuntime();
 		try {
 			String command = String.format("%s -cp %s %s", javac, robocodeJar,
@@ -97,6 +103,15 @@ class DumpAndCompileHandler implements UploadBotHandler {
 		} catch (InterruptedException e) {
 			debug("interrupted");
 			Thread.currentThread().interrupt();
+		}
+	}
+
+	private String parsePackageDeclaration() throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(captureStream.toByteArray())));
+		try {
+			return reader.readLine();
+		} finally {
+			reader.close();
 		}
 	}
 
