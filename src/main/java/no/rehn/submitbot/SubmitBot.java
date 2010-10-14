@@ -3,6 +3,7 @@ package no.rehn.submitbot;
 import java.io.File;
 
 import com.vaadin.Application;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Window;
 
 /**
@@ -20,7 +21,10 @@ public class SubmitBot extends Application {
 		Provider<UploadBotHandler> handlerProvider = createUploadHandler();
 		UploadBotWidget uploadBotWidget = new UploadBotWidget(logins,
 				handlerProvider);
-		setMainWindow(new Window("Submit your bot", uploadBotWidget));
+		HorizontalLayout layout = new HorizontalLayout();
+		layout.addComponent(uploadBotWidget);
+		layout.addComponent(new BotStatusWidget(logins, outputDir));
+		setMainWindow(new Window("Submit your bot", layout));
 	}
 
 	Provider<UploadBotHandler> createUploadHandler() {
