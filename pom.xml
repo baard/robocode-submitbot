@@ -8,15 +8,17 @@
     <name>Webapp for submitting Robocode bots</name>
     <dependencies>
         <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin</artifactId>
+            <version>6.4.6</version>
+        </dependency>
+
+        <!-- testing -->
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.vaadin</groupId>
-            <artifactId>vaadin</artifactId>
-            <version>6.4.6</version>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jetty</groupId>
